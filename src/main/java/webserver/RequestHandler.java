@@ -3,7 +3,9 @@ package webserver;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.Map;
 
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
@@ -24,12 +26,27 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
-            String requestURL = HttpRequestUtils.parseRequestURL(br.readLine());
+            String line = br.readLine();
+            String requestURL = HttpRequestUtils.parseRequestPath(line);
+            String httpMethod = HttpRequestUtils.parseHttpMethod(line);
             byte[] body = "Hello World".getBytes();
 
-            if(requestURL.equals("/index.html"))
+            if(requestURL.equals("/index.html") && httpMethod.equals("GET"))
                 body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
 
+            if(requestURL.equals("/user/form.html") && httpMethod.equals("GET"))
+                body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
+
+            if(requestURL.startsWith("/user/create") && httpMethod.equals("GET")) {
+                int idx = requestURL.indexOf("?");
+                String params = requestURL.substring(idx + 1);
+                Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(params);
+                User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"),
+                        queryStringMap.get("name"), queryStringMap.get("email"));
+                log.info("user = {}", user);
+                body = "Register successfully finished!".getBytes();
+            }
+            
             DataOutputStream dos = new DataOutputStream(out);
             response200Header(dos, body.length);
             responseBody(dos, body);

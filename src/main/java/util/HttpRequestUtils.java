@@ -53,8 +53,12 @@ public class HttpRequestUtils {
         return getKeyValue(header, ": ");
     }
 
-    public static String parseRequestURL(String requestURLInfo){
-        return requestURLInfo.split(" ")[1];
+    public static String parseRequestPath(String requestURL){
+        return requestURL.split(" ")[1];
+    }
+
+    public static String parseHttpMethod(String requestURL){
+        return requestURL.split(" ")[0];
     }
 
     public static class Pair {
