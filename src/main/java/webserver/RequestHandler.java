@@ -68,7 +68,7 @@ public class RequestHandler extends Thread {
                 body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
                 response200Header(dos, body.length);
             }
-            
+
             if(requestURL.startsWith("/user/create") && httpMethod.equals("GET")) {
                 int idx = requestURL.indexOf("?");
                 String params = requestURL.substring(idx + 1);
@@ -116,6 +116,25 @@ public class RequestHandler extends Thread {
                     redirectPath = "localhost:8080/index.html";
                 }
                 response302HeaderWithCookie(dos, redirectPath, logined);
+            }
+
+            if(requestURL.equals("/user/list") && httpMethod.equals("GET")) {
+                Map<String,String> cookieMap = HttpRequestUtils.parseCookies(headerFields.get("Cookie"));
+                boolean logined = Boolean.parseBoolean(cookieMap.get("logined"));
+
+                if(logined){
+                    StringBuilder sb = new StringBuilder();
+                    for(User user : DataBase.findAll()){
+                        sb.append("유저ID:" + user.getUserId() +
+                                " 유저Email:" + user.getEmail() +
+                                " 유저Name:" + user.getName() + "\n");
+                    }
+                    body = sb.toString().getBytes();
+                    response200Header(dos, body.length);
+                }
+
+               if(!logined)
+                   response302Header(dos, "localhost:8080/user/login.html");
             }
 
             responseBody(dos, body);
