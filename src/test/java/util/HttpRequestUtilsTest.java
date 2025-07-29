@@ -74,7 +74,7 @@ public class HttpRequestUtilsTest {
     @Test
     public void parseRequestURL() {
         String requestURLInfo = "GET /index.html HTTP/1.1";
-        String requestURL = HttpRequestUtils.parseRequestURL(requestURLInfo);
+        String requestURL = HttpRequestUtils.parseRequestPath(requestURLInfo);
         assertEquals("/index.html", requestURL);
     }
 }

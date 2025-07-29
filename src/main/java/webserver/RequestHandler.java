@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.util.Map;
 
+import db.DataBase;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,17 +50,19 @@ public class RequestHandler extends Thread {
                 body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
                 response200Header(dos, body.length);
             }
+
             if(requestURL.equals("/user/form.html") && httpMethod.equals("GET")) {
                 body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
                 response200Header(dos, body.length);
             }
+
             if(requestURL.startsWith("/user/create") && httpMethod.equals("GET")) {
                 int idx = requestURL.indexOf("?");
                 String params = requestURL.substring(idx + 1);
                 Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(params);
                 User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"),
                         queryStringMap.get("name"), queryStringMap.get("email"));
-                log.info("user = {}", user);
+                DataBase.addUser(user);
                 body = "register successfully finished".getBytes();
                 response302Header(dos, "localhost:8080/index.html");
             }
@@ -72,9 +75,34 @@ public class RequestHandler extends Thread {
                 Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(params);
                 User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"),
                         queryStringMap.get("name"), queryStringMap.get("email"));
-                log.info("user = {}", user);
+                DataBase.addUser(user);
                 body = "register successfully finished".getBytes();
                 response302Header(dos, "localhost:8080/index.html");
+            }
+
+            if(requestURL.equals("/user/login.html") && httpMethod.equals("GET")) {
+                body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
+                response200Header(dos, body.length);
+            }
+
+            if(requestURL.equals("/user/login") && httpMethod.equals("POST")) {
+                int contentLength = Integer.parseInt(header[3].split(" ")[1]);
+                char[] buffer = new char[contentLength];
+                br.read(buffer);
+                String params = new String(buffer);
+                Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(params);
+
+                String userId = queryStringMap.get("userId");
+                String userPassword = queryStringMap.get("password");
+                User user = DataBase.findUserById(userId);
+                boolean logined = false;
+                body = Files.readAllBytes(new File("./webapp/user/login_failed.html").toPath());
+
+                if(user != null && user.getPassword().equals(userPassword)) {
+                    logined = true;
+                    body = Files.readAllBytes(new File("./webapp/user/login.html").toPath());
+                }
+                response200HeaderWithCookie(dos, logined);
             }
 
             responseBody(dos, body);
@@ -88,6 +116,17 @@ public class RequestHandler extends Thread {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response200HeaderWithCookie(DataOutputStream dos, boolean logined) {
+        try {
+            dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Set-Cookie: logined=" + logined);
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
