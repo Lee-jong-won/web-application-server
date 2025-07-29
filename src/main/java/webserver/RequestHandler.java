@@ -26,6 +26,7 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            DataOutputStream dos = new DataOutputStream(out);
 
             StringBuilder headerSb = new StringBuilder();
             String line;
@@ -40,12 +41,18 @@ public class RequestHandler extends Thread {
             String httpMethod = HttpRequestUtils.parseHttpMethod(header[0]);
             byte[] body = "Hello World".getBytes();
 
-            if(requestURL.equals("/index.html") && httpMethod.equals("GET"))
-                body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
+            if(requestURL.equals("/") && httpMethod.equals("GET")){
+                response200Header(dos, body.length);
+            }
 
-            if(requestURL.equals("/user/form.html") && httpMethod.equals("GET"))
+            if(requestURL.equals("/index.html") && httpMethod.equals("GET")) {
                 body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
-
+                response200Header(dos, body.length);
+            }
+            if(requestURL.equals("/user/form.html") && httpMethod.equals("GET")) {
+                body = Files.readAllBytes(new File("./webapp" + requestURL).toPath());
+                response200Header(dos, body.length);
+            }
             if(requestURL.startsWith("/user/create") && httpMethod.equals("GET")) {
                 int idx = requestURL.indexOf("?");
                 String params = requestURL.substring(idx + 1);
@@ -53,7 +60,8 @@ public class RequestHandler extends Thread {
                 User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"),
                         queryStringMap.get("name"), queryStringMap.get("email"));
                 log.info("user = {}", user);
-                body = "Register successfully finished!".getBytes();
+                body = "register successfully finished".getBytes();
+                response302Header(dos, "localhost:8080/index.html");
             }
 
             if(requestURL.startsWith("/user/create") && httpMethod.equals("POST")){
@@ -65,12 +73,10 @@ public class RequestHandler extends Thread {
                 User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"),
                         queryStringMap.get("name"), queryStringMap.get("email"));
                 log.info("user = {}", user);
-                body = "Register successfully finished!".getBytes();
+                body = "register successfully finished".getBytes();
+                response302Header(dos, "localhost:8080/index.html");
             }
 
-
-            DataOutputStream dos = new DataOutputStream(out);
-            response200Header(dos, body.length);
             responseBody(dos, body);
         } catch (IOException e) {
             log.error(e.getMessage());
@@ -82,6 +88,16 @@ public class RequestHandler extends Thread {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
             dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+            dos.writeBytes("\r\n");
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    private void response302Header(DataOutputStream dos, String redirectPath){
+        try {
+            dos.writeBytes("HTTP/1.1 302 Found \r\n");
+            dos.writeBytes("Location: http://" + redirectPath + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
             log.error(e.getMessage());
