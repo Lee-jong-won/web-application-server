@@ -26,9 +26,18 @@ public class RequestHandler extends Thread {
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
             // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
-            String line = br.readLine();
-            String requestURL = HttpRequestUtils.parseRequestPath(line);
-            String httpMethod = HttpRequestUtils.parseHttpMethod(line);
+
+            StringBuilder headerSb = new StringBuilder();
+            String line;
+            while( (line = br.readLine()) != null && !"".equals(line))
+                headerSb.append(line + "\n");
+
+            log.info("httpMessage = {}", headerSb.toString());
+
+            String[] header = headerSb.toString().split("\n");
+
+            String requestURL = HttpRequestUtils.parseRequestPath(header[0]);
+            String httpMethod = HttpRequestUtils.parseHttpMethod(header[0]);
             byte[] body = "Hello World".getBytes();
 
             if(requestURL.equals("/index.html") && httpMethod.equals("GET"))
@@ -46,7 +55,20 @@ public class RequestHandler extends Thread {
                 log.info("user = {}", user);
                 body = "Register successfully finished!".getBytes();
             }
-            
+
+            if(requestURL.startsWith("/user/create") && httpMethod.equals("POST")){
+                int contentLength = Integer.parseInt(header[3].split(" ")[1]);
+                char[] buffer = new char[contentLength];
+                br.read(buffer);
+                String params = new String(buffer);
+                Map<String, String> queryStringMap = HttpRequestUtils.parseQueryString(params);
+                User user = new User(queryStringMap.get("userId"), queryStringMap.get("password"),
+                        queryStringMap.get("name"), queryStringMap.get("email"));
+                log.info("user = {}", user);
+                body = "Register successfully finished!".getBytes();
+            }
+
+
             DataOutputStream dos = new DataOutputStream(out);
             response200Header(dos, body.length);
             responseBody(dos, body);
