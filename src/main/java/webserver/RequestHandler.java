@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import db.DataBase;
+import http.HttpMethod;
 import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class RequestHandler extends Thread {
             String[] header = headerSb.toString().split("\n");
             String requestLine = header[0];
             String requestURL = HttpRequestUtils.parseRequestPath(requestLine);
-            String httpMethod = HttpRequestUtils.parseHttpMethod(requestLine);
+            HttpMethod httpMethod = HttpRequestUtils.parseHttpMethod(requestLine);
 
             Map<String, String> headerFields = new HashMap<>();
             for(int i = 1; i < header.length; i++){
@@ -138,7 +139,7 @@ public class RequestHandler extends Thread {
         response200Header(dos, body.length);
         responseBody(dos, body);
     }
-    
+
     private void response302LoginSuccessFailHeader(DataOutputStream dos, String redirectPath, boolean logined) {
         try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
