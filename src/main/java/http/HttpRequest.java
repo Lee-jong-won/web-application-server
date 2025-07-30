@@ -15,7 +15,7 @@ public class HttpRequest {
     private HttpMethod method;
     private String requestPath;
     private Map<String, String> headerFields = new HashMap<>();
-    private Map<String, String> requestParams = new HashMap<>();
+    private Map<String, String> requestParams;
 
 
     public HttpRequest(InputStream in){

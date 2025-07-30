@@ -26,7 +26,7 @@ public class ListUserController extends AbstractController {
             }
             sb.append("</table>");
             byte[] body = sb.toString().getBytes();
-            response.forward(request.getRequestPath());
+            response.forwardBody(body, "html");
         }
 
         if(!logined) {

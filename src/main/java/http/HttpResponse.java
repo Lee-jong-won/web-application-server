@@ -41,10 +41,28 @@ public class HttpResponse {
 
     }
 
+    public void forwardBody(byte[] body, String type){
+        if(type.equals("css"))
+            addHeader("Content-Type", "text/css;charset=utf-8");
+        else if(type.equals("js"))
+            addHeader("Content-Type", "application/javascript");
+        else
+            addHeader("Content-Type", "text/html;charset=utf-8");
+
+        try {
+            addHeader("Content-Length", Integer.toString(body.length));
+            dos.writeBytes("HTTP/1.1 200 OK \r\n");
+            processHeaders();
+            responseBody(body);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+        }
+    }
+
     public void sendRedirect(String redirectPath){
         try {
             dos.writeBytes("HTTP/1.1 302 Found \r\n");
-            addHeader("Location", redirectPath);
+            addHeader("Location", "http://" + redirectPath);
             processHeaders();
         } catch (IOException e) {
             log.error(e.getMessage());

@@ -19,6 +19,7 @@ public class LoginController extends AbstractController{
 
         if(user != null && user.getPassword().equals(password)) {
             logined = true;
+            response.addHeader("Set-Cookie", "logined=" + Boolean.toString(logined));
             redirectPath = "localhost:8080/index.html";
         }
 
