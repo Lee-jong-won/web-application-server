@@ -12,11 +12,8 @@ import java.util.Map;
 public class HttpRequest {
 
     private static final Logger log = LoggerFactory.getLogger(HttpRequest.class);
-    private HttpMethod method;
-    private String requestPath;
     private Map<String, String> headerFields = new HashMap<>();
-    private Map<String, String> requestParams;
-
+    private RequestLine requestLine;
 
     public HttpRequest(InputStream in){
 
@@ -31,26 +28,18 @@ public class HttpRequest {
             log.info("httpMessage = {}", headerSb.toString());
 
             String[] header = headerSb.toString().split("\n");
-            String requestLine = header[0];
-
-            processRequestLine(requestLine);
+            requestLine = new RequestLine(header[0]);
 
             for(int i = 1; i < header.length; i++){
                 String[] headerField = header[i].split(": ");
                 headerFields.put(headerField[0], headerField[1]);
             }
 
-            if(method.isPost()){
+            if(getMethod().isPost()){
                 int contentLength = Integer.parseInt(getHeader("Content-Length"));
                 String requestBody = IOUtils.readData(br, contentLength);
-
-                if(requestParams == null)
-                    this.requestParams = HttpRequestUtils.parseQueryString(requestBody);
-                else{
-                    this.requestParams.putAll(HttpRequestUtils.parseQueryString(requestBody));
-                }
+                requestLine.getRequestParams().putAll(HttpRequestUtils.parseQueryString(requestBody));
             }
-
 
         } catch (UnsupportedEncodingException e) {
             log.error(e.getMessage());
@@ -60,35 +49,20 @@ public class HttpRequest {
 
     }
 
-    private void processRequestLine(String requestLine){
-
-        String url = HttpRequestUtils.parseRequestPath(requestLine);
-        this.method = HttpRequestUtils.parseHttpMethod(requestLine);
-        int idx = url.indexOf("?");
-
-        if(idx != -1){
-            this.requestPath = url.substring(0, idx);
-            this.requestParams = HttpRequestUtils.parseQueryString(url.substring(idx + 1));
-        }else{
-            this.requestPath = url;
-        }
-
-    }
-
     public String getHeader(String fieldName){
         return headerFields.get(fieldName);
     }
 
     public String getParameter(String parameterName){
-        return requestParams.get(parameterName);
+        return requestLine.getRequestParams().get(parameterName);
     }
 
     public HttpMethod getMethod(){
-        return this.method;
+        return requestLine.getMethod();
     }
 
     public String getRequestPath(){
-        return this.requestPath;
+        return requestLine.getRequestPath();
     }
 
 }
