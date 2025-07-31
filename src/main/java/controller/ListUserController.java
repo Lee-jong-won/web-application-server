@@ -11,8 +11,7 @@ import java.util.Map;
 public class ListUserController extends AbstractController {
     @Override
     public void doGet(HttpRequest request, HttpResponse response){
-        String cookieValues = request.getHeader("Cookie");
-        boolean logined = isLogin(cookieValues);
+        boolean logined = Boolean.parseBoolean(request.getOneCookieValue("logined"));
 
         if(logined){
             StringBuilder sb = new StringBuilder();
@@ -34,10 +33,7 @@ public class ListUserController extends AbstractController {
         }
     }
 
-    private boolean isLogin(String cookieValues){
-        Map<String,String> cookieMap = HttpRequestUtils.parseCookies(cookieValues);
-        return Boolean.parseBoolean(cookieMap.get("logined"));
-    }
+
 
 
 }

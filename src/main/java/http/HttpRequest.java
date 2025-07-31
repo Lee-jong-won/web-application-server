@@ -49,6 +49,13 @@ public class HttpRequest {
 
     }
 
+    public String getOneCookieValue(String cookieName){
+        String cookies = getHeader("Cookie");
+        Map<String, String> cookieMap = HttpRequestUtils.parseCookies(cookies);
+        return cookieMap.get(cookieName);
+    }
+
+
     public String getHeader(String fieldName){
         return headerFields.get(fieldName);
     }
@@ -64,5 +71,7 @@ public class HttpRequest {
     public String getRequestPath(){
         return requestLine.getRequestPath();
     }
+
+
 
 }
